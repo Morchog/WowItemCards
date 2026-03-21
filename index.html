@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
+
+    <script>
+        var whTooltips = {
+            expansion: "wotlk",
+            iconizeLinks: true,
+            renameLinks: true,
+            colorLinks: true
+        };
+    </script>
+
+    <script src="https://wow.zamimg.com/widgets/power.js"></script>
+
+    <style>
+        body {
+            background: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* 🃏 CARD */
+        .card {
+            border-radius: 14px;
+            background: linear-gradient(145deg, #1e293b, #0b1220);
+
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+
+            text-decoration: none;
+            cursor: default;
+            transition: all 0.15s ease;
+            border: 2px solid transparent;
+        }
+
+        /* ICON */
+        .card .iconlarge {
+            margin-bottom: 10px !important;
+
+            width: 60px !important;
+            height: 60px !important;
+
+            display: block !important;
+            margin: 0 auto 10px auto !important;
+            padding: 0 !important;
+            position: relative;
+        }
+
+        /* ensure proper layering */
+        .card .iconlarge ins {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+
+            width: 88% !important;
+            height: 88% !important;
+
+            transform: translate(-50%, -50%);
+            background-size: cover !important;
+        }
+
+        .card .iconlarge del {
+            width: 100% !important;
+            height: 100% !important;
+            display: block !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-size: 100% 100% !important;
+        }
+
+        .card .iconlarge img {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+
+        /* 📝 ITEM NAME */
+        .card span:last-child {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 300;
+            line-height: 1.25;
+            word-break: break-word;
+            padding: 0 6px;
+        }
+
+        /* ✨ BASE GLOW (subtle, always visible) */
+        .card.q1 {
+            border-color: #aaaaaa;
+            box-shadow: 0 0 1px #d6d6d6;
+        }
+
+        .card.q2 {
+            border-color: #1eff00;
+            box-shadow: 0 0 3px #1eff00;
+        }
+
+        .card.q3 {
+            border-color: #0070dd;
+            box-shadow: 0 0 15px #0070dd;
+        }
+
+        .card.q4 {
+            border-color: #a335ee;
+            box-shadow: 0 0 35px #a335ee;
+        }
+
+        .card.q5 {
+            border-color: #ff8000;
+            box-shadow: 0 0 48px #ff8000;
+        }
+
+        /* 💥 STRONGER HOVER GLOW */
+        .card.q2:hover {
+            box-shadow: 0 0 15px #1eff00;
+        }
+
+        .card.q3:hover {
+            box-shadow: 0 0 25px #0070dd;
+        }
+
+        .card.q4:hover {
+            box-shadow: 0 0 55px #a335ee;
+        }
+
+        .card.q5:hover {
+            box-shadow: 0 0 70px #ff8000;
+        }
+
+        /* 🔥 LEGENDARY PULSE ANIMATION */
+        @keyframes legendaryGlow {
+            0% {
+                box-shadow: 0 0 48px #ff8000;
+            }
+
+            50% {
+                box-shadow: 0 0 80px #ff8000;
+            }
+
+            100% {
+                box-shadow: 0 0 48px #ff8000;
+            }
+        }
+
+        .card.q5 {
+            animation: legendaryGlow 2s infinite;
+        }
+
+        /* 🃏 WRAPPER (3D space) */
+        .card-wrapper {
+            perspective: 1200px;
+            display: inline-block;
+            position: relative;
+        }
+
+        /* INNER ROTATING ELEMENT */
+        .card-inner {
+            width: 120px;
+            height: 180px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease;
+        }
+
+        /* FLIPPED STATE */
+        .card-wrapper.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* FRONT + BACK shared */
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            overflow: hidden;
+        }
+
+        /* BACK SIDE */
+        .card.back {
+            transform: rotateY(180deg);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: linear-gradient(145deg, #334155, #020617);
+            border-radius: 14px;
+        }
+
+        /* BACK CONTENT */
+        .card-back-content {
+            color: #cbd5f5;
+            font-size: 14px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        /* ❌ remove glow when flipped */
+        .card-wrapper.flipped .front {
+            box-shadow: none !important;
+            border-color: transparent !important;
+            animation: none !important;
+        }
+
+        /* ❌ remove foil when flipped */
+        .card-wrapper.flipped .card::before,
+        .card-wrapper.flipped .card::after {
+            opacity: 0 !important;
+        }
+
+        /* ✨ HOLOGRAPHIC FOIL LAYER */
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%),
+                    rgba(255, 255, 255, 0.25),
+                    rgba(255, 255, 255, 0.05) 30%,
+                    transparent 60%);
+
+            opacity: 0.6;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        /* 🌈 RAINBOW SHIMMER */
+        .card::after {
+            content: "";
+            position: absolute;
+
+            /* 🔥 make it bigger than the card */
+            width: 200%;
+            height: 100%;
+            left: -50%;
+            top: 0;
+
+            border-radius: 14px;
+
+            mix-blend-mode: screen;
+            pointer-events: none;
+
+            animation: holoMove 6s ease-in-out infinite alternate;
+        }
+
+        .card.q2::after {
+            background: linear-gradient(120deg,
+                    rgba(30, 255, 0, 0.15) 0%,
+                    rgba(80, 255, 120, 0.25) 40%,
+                    rgba(180, 255, 200, 0.35) 50%,
+                    rgba(80, 255, 120, 0.25) 60%,
+                    rgba(30, 255, 0, 0.15) 100%);
+
+            opacity: 0.35;
+        }
+
+        .card.q3::after {
+            background: linear-gradient(120deg,
+                    rgba(0, 112, 221, 0.2) 0%,
+                    rgba(0, 180, 255, 0.3) 40%,
+                    rgba(120, 220, 255, 0.4) 50%,
+                    rgba(0, 180, 255, 0.3) 60%,
+                    rgba(0, 112, 221, 0.2) 100%);
+
+            opacity: 0.35;
+        }
+
+        .card.q4::after {
+            background: linear-gradient(120deg,
+                    rgba(163, 53, 238, 0.25) 0%,
+                    rgba(200, 120, 255, 0.35) 40%,
+
+                    rgba(255, 200, 255, 0.5) 50%,
+
+                    rgba(200, 120, 255, 0.35) 60%,
+                    rgba(163, 53, 238, 0.25) 100%);
+
+            opacity: 0.35;
+        }
+
+        .card.q5::after {
+            background: linear-gradient(120deg,
+                    rgba(255, 120, 0, 0.4) 0%,
+                    rgba(255, 200, 0, 0.5) 40%,
+
+                    rgba(255, 255, 255, 0.6) 50%,
+
+                    rgba(255, 200, 0, 0.5) 60%,
+                    rgba(255, 120, 0, 0.4) 100%);
+
+            opacity: 0.35;
+        }
+
+        /* 🌈 ANIMATION */
+        @keyframes holoMove {
+            from {
+                transform: translateX(-25%);
+            }
+
+            to {
+                transform: translateX(25%);
+            }
+        }
+
+        .wowhead-tooltip {
+            position: fixed !important;
+            left: var(--tooltip-x) !important;
+            top: var(--tooltip-y) !important;
+            transform: translateY(-50%) !important;
+            pointer-events: none !important;
+            transition: none !important;
+            will-change: transform;
+        }
+
+        .wowhead-tooltip .icon,
+        .wowhead-tooltip .iconsmall,
+        .wowhead-tooltip .iconmedium,
+        .wowhead-tooltip .iconlarge {
+            display: none !important;
+        }
+
+        .tooltip-anchor {
+            display: block;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: default;
+        }
+
+        .hover-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+        }
+
+        .hover-layer-flipped {
+            display: none;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .columns {
+            display: flex;
+            gap: 15px;
+            /* space between columns */
+            align-items: center;
+        }
+
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            /* vertical spacing */
+        }
+
+        .center {
+            margin-top: -60px;
+            /* lifts it to align hex shape */
+        }
+
+        .left {
+            margin-top: 60px;
+        }
+
+        .right {
+            margin-top: 60px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="columns">
+            <div class="col left">
+                <!-- 3 cards -->
+            </div>
+
+            <div class="col center">
+                <!-- 4 cards -->
+            </div>
+
+            <div class="col right">
+                <!-- 3 cards -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        //  CARD LAYOUT
+        const leftCol = document.querySelector('.left');
+        const centerCol = document.querySelector('.center');
+        const rightCol = document.querySelector('.right');
+
+        // helper to create one card - 19019
+        function createCard(id) {
+            return `
+                <div class="card-wrapper flipped">
+                    <div class="hover-layer-flipped">
+                        <!-- 🔥 STABLE TOOLTIP ANCHOR -->
+                        <a class="tooltip-anchor" href="https://wotlk.wowhead.com/item=${id}" data-wh-icon="true"
+                            data-wh-icon-size="large" data-wh-rename="true">
+                        </a>
+                    </div>
+                    <div class="card-inner">
+
+                        <!-- FRONT -->
+                        <a class="card front" href="https://wotlk.wowhead.com/item=${id}" data-wh-icon="true"
+                            data-wh-icon-size="large" data-wh-rename="true">
+                        </a>
+
+                        <!-- BACK -->
+                        <div class="card back">
+                            <div class="card-back-content">
+                                ✨ Hidden Item ✨
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        }
+
+        // TEST CODE
+        
+        const leftItems = [19019, 19020, 19021];
+        const centerItems = [19022, 19023, 19024, 19025];
+        const rightItems = [19026, 19027, 19028];
+
+        leftCol.innerHTML = leftItems.map(createCard).join('');
+        centerCol.innerHTML = centerItems.map(createCard).join('');
+        rightCol.innerHTML = rightItems.map(createCard).join('');
+
+        // if (window.whTooltips) {
+        //     window.whTooltips.refreshLinks?.();
+        // }
+
+
+        // disable click (keep tooltip) - LINK DISABLER
+        document.querySelectorAll('.card').forEach(el => {
+            el.addEventListener('click', e => e.preventDefault());
+        });
+        document.querySelectorAll('.tooltip-anchor').forEach(el => {
+            el.addEventListener('click', e => e.preventDefault());
+        });
+
+
+        // CARD FLIP LOGIC
+        document.querySelectorAll('.card-wrapper').forEach(wrapper => {
+            const inner = wrapper.querySelector('.card-inner');
+
+            wrapper.addEventListener('click', () => {
+                wrapper.classList.remove('flipped');
+                inner.style.transform = 'rotateY(0deg) scale(1.05)';
+            });
+        });
+
+        // TOOLTIP POSITIONING
+        document.querySelectorAll('.card-wrapper').forEach(wrapper => {
+
+            wrapper.addEventListener('mouseenter', () => {
+                const rect = wrapper.getBoundingClientRect();
+
+                const x = rect.right + 40;
+                const y = rect.top + rect.height / 2;
+
+                document.documentElement.style.setProperty('--tooltip-x', x + 'px');
+                document.documentElement.style.setProperty('--tooltip-y', y + 'px');
+            });
+
+        });
+
+        // CARD TILT ANIMATION
+        const wrappers = document.querySelectorAll('.card-wrapper');
+
+        wrappers.forEach(wrapper => {
+            const inner = wrapper.querySelector('.card-inner');
+
+            wrapper.addEventListener('mousemove', (e) => {
+                const rect = wrapper.getBoundingClientRect();
+
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                wrapper.style.setProperty('--x', x + 'px');
+                wrapper.style.setProperty('--y', y + 'px');
+
+                const midX = rect.width / 2;
+                const midY = rect.height / 2;
+
+                const rotateY = ((x - midX) / midX) * 15;   // horizontal tilt
+                const rotateX = -((y - midY) / midY) * 15;  // vertical tilt
+
+                const flipped = wrapper.classList.contains('flipped');
+
+                inner.style.transform = `
+                    rotateX(${rotateX}deg)
+                    rotateY(${rotateY + (flipped ? 180 : 0)}deg)
+                    scale(1.05)
+                    `;
+            });
+
+            wrapper.addEventListener('mouseleave', () => {
+                const flipped = wrapper.classList.contains('flipped');
+
+                inner.style.transform = flipped
+                    ? 'rotateY(180deg)'
+                    : 'rotateY(0deg)';
+            });
+        });
+    </script>
+
+</body>
+
+</html>
