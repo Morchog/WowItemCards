@@ -1017,7 +1017,38 @@
         type="application/json"> { "c": { "0": { "39": "Recruit's Pants", "44": "Squire's Pants" }, "1": { "25": "Worn Shortsword", "35": "Bent Staff" }, "2": { "727": "Notched Shortsword", "744": "Thunderbrew's Boot Flask" }, "3": { "720": "Brawler Gloves", "754": "Shortsword of Vengeance" }, "4": { "647": "Destiny", "809": "Bloodrazor", "810": "Hammer of the Northern Wind" }, "5": { "17182": "Sulfuras, Hand of Ragnaros" } } } </script> -->
 
     <script>
+        // ============ CONSTANTS ===================================================
+        // ============ CONSTANTS ===================================================
+        // ============ CONSTANTS ===================================================
         const MAX = 1_000_000_000_000_000;
+
+        // 🛡️ GLOBAL SAFE getBoundingClientRect
+        // 🛡️ GLOBAL SAFE getBoundingClientRect
+        // 🛡️ GLOBAL SAFE getBoundingClientRect
+        const _getBoundingClientRect = Element.prototype.getBoundingClientRect;
+
+        Element.prototype.getBoundingClientRect = function () {
+            try {
+                // 🛑 skip detached elements
+                if (!this || !this.isConnected) {
+                    return {
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        width: 0, height: 0
+                    };
+                }
+
+                return _getBoundingClientRect.call(this);
+
+            } catch (e) {
+                return {
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    width: 0, height: 0
+                };
+            }
+        };
+        // ============ CONSTANTS ===================================================
+        // ============ CONSTANTS ===================================================
+        // ============ CONSTANTS ===================================================
 
         // INITIALIZATION
         // INITIALIZATION
@@ -1071,6 +1102,8 @@
         }
 
         function showFloatingText(targetEl, text, type) {
+            if (!targetEl || !targetEl.isConnected) return;
+
             const rect = targetEl.getBoundingClientRect();
 
             const el = document.createElement('div');
@@ -1257,8 +1290,8 @@
 
         // APPRAISAL POPUP
         function renderRewards(rewards) {
-            const container = document.querySelector('.popup-body');
-            container.innerHTML = '';
+            const popupContainer = document.querySelector('.popup-body');
+            popupContainer.innerHTML = '';
 
             Object.entries(rewards).forEach(([type, value]) => {
                 const row = document.createElement('div');
@@ -1269,7 +1302,7 @@
                     <span>+${formatNumber(value)}</span>
                 `;
 
-                container.appendChild(row);
+                popupContainer.appendChild(row);
             });
         }
 
@@ -1533,149 +1566,269 @@
 
 
         // disable click (keep tooltip) - LINK DISABLER
-        document.querySelectorAll('.card').forEach(el => {
-            el.addEventListener('click', e => e.preventDefault());
-        });
-        document.querySelectorAll('.tooltip-anchor').forEach(el => {
-            el.addEventListener('click', e => e.preventDefault());
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('.card, .tooltip-anchor');
+            if (!link) return;
+
+            // 🛑 always prevent navigation
+            e.preventDefault();
         });
 
         // CARDS LOGIC
         // CARDS LOGIC
         // CARDS LOGIC
         const container = document.querySelector('.container');
-        const wrappers = document.querySelectorAll('.card-wrapper');
+
+
+        // const wrappers = document.querySelectorAll('.card-wrapper');
 
         // CARD FLIP LOGIC
-        wrappers.forEach(wrapper => {
-            const inner = wrapper.querySelector('.card-inner');
+        // wrappers.forEach(wrapper => {
+        //     const inner = wrapper.querySelector('.card-inner');
 
-            wrapper.addEventListener('click', () => {
+        //     wrapper.addEventListener('click', () => {
 
-                // ❌ ignore in collection view
-                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
+        //         // ❌ ignore in collection view
+        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
 
-                // 🔥 If already revealed → ignore
+        //         // 🔥 If already revealed → ignore
+        //         if (!wrapper.classList.contains('flipped')) return;
+
+        //         // 💥 If already revealing → SKIP animation
+        //         if (wrapper.classList.contains('revealing')) {
+
+        //             clearTimeout(wrapper._revealTimeout);
+
+        //             const inner = wrapper.querySelector('.card-inner');
+
+        //             // clean state
+        //             inner.style.transform = 'none';
+        //             inner.offsetHeight;
+
+        //             wrapper.classList.remove('flipped');
+        //             wrapper.classList.remove('pre-epic', 'pre-legendary', 'pre-heirloom');
+        //             wrapper.classList.remove('revealing');
+
+        //             return;
+        //         }
+
+        //         // 🧠 NORMAL FLOW
+        //         wrapper.classList.add('revealing');
+
+        //         const inner = wrapper.querySelector('.card-inner');
+        //         const front = wrapper.querySelector('.front');
+
+        //         let rarity = null;
+        //         if (front.classList.contains('q4')) rarity = 'epic';
+        //         if (front.classList.contains('q5')) rarity = 'legendary';
+        //         if (front.classList.contains('q7')) rarity = 'heirloom';
+
+        //         let delay = 0;
+
+        //         if (rarity) {
+        //             wrapper.classList.add(`pre-${rarity}`);
+
+        //             delay = 600;
+        //             if (rarity === 'legendary') delay = 1200;
+        //             if (rarity === 'heirloom') delay = 900;
+        //         }
+
+        //         // 🔥 store timeout so we can cancel it
+        //         wrapper._revealTimeout = setTimeout(() => {
+
+        //             inner.style.transform = 'none';
+        //             inner.offsetHeight;
+
+        //             wrapper.classList.remove('flipped');
+        //             wrapper.classList.remove(`pre-${rarity}`);
+        //             wrapper.classList.remove('revealing');
+
+        //         }, delay);
+        //     });
+        // });
+
+        // // TOOLTIP POSITIONING
+        // wrappers.forEach(wrapper => {
+
+        //     wrapper.addEventListener('mouseenter', () => {
+        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
+        //         const rect = wrapper.getBoundingClientRect();
+
+        //         const x = rect.right + 30;
+        //         const y = rect.top + rect.height / 2;
+
+        //         document.documentElement.style.setProperty('--tooltip-x', x + 'px');
+        //         document.documentElement.style.setProperty('--tooltip-y', y + 'px');
+        //     });
+
+        // });
+
+        // // CARD TILT ANIMATION
+        // wrappers.forEach(wrapper => {
+        //     const inner = wrapper.querySelector('.card-inner');
+
+        //     wrapper.addEventListener('mouseenter', () => {
+        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
+        //         if (wrapper.classList.contains('revealing')) return;
+
+        //         isHovering = true;
+        //     });
+
+        //     wrapper.addEventListener('mousemove', (e) => {
+        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
+        //         if (wrapper.classList.contains('revealing')) return;
+
+        //         updateTilt(wrapper, inner, e);
+        //     });
+
+        //     wrapper.addEventListener('mouseleave', () => {
+        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
+        //         inner.style.transform = '';
+        //     });
+        // });
+
+        // ================= GAME VIEW INTERACTIONS (SAFE) =================
+
+        function setupGameCardInteractions() {
+            const container = document.querySelector('.container');
+
+            // CLICK (flip logic)
+            container.addEventListener('click', (e) => {
+                const wrapper = e.target.closest('.card-wrapper');
+                if (!wrapper) return;
+
+                // 🛑 ONLY GAME VIEW
+                if (!isGameViewActive()) return;
+
+                const inner = wrapper.querySelector('.card-inner');
+                if (!inner) return;
+
                 if (!wrapper.classList.contains('flipped')) return;
 
-                // 💥 If already revealing → SKIP animation
                 if (wrapper.classList.contains('revealing')) {
-
                     clearTimeout(wrapper._revealTimeout);
 
-                    const inner = wrapper.querySelector('.card-inner');
-
-                    // clean state
                     inner.style.transform = 'none';
                     inner.offsetHeight;
 
-                    wrapper.classList.remove('flipped');
-                    wrapper.classList.remove('pre-epic', 'pre-legendary', 'pre-heirloom');
-                    wrapper.classList.remove('revealing');
-
+                    wrapper.classList.remove('flipped', 'revealing', 'pre-epic', 'pre-legendary', 'pre-heirloom');
                     return;
                 }
 
-                // 🧠 NORMAL FLOW
                 wrapper.classList.add('revealing');
 
-                const inner = wrapper.querySelector('.card-inner');
                 const front = wrapper.querySelector('.front');
 
                 let rarity = null;
-                if (front.classList.contains('q4')) rarity = 'epic';
-                if (front.classList.contains('q5')) rarity = 'legendary';
-                if (front.classList.contains('q7')) rarity = 'heirloom';
+                if (front?.classList.contains('q4')) rarity = 'epic';
+                if (front?.classList.contains('q5')) rarity = 'legendary';
+                if (front?.classList.contains('q7')) rarity = 'heirloom';
 
                 let delay = 0;
 
                 if (rarity) {
                     wrapper.classList.add(`pre-${rarity}`);
-
-                    delay = 600;
-                    if (rarity === 'legendary') delay = 1200;
-                    if (rarity === 'heirloom') delay = 900;
+                    delay = rarity === 'legendary' ? 1200 : rarity === 'heirloom' ? 900 : 600;
                 }
 
-                // 🔥 store timeout so we can cancel it
                 wrapper._revealTimeout = setTimeout(() => {
-
                     inner.style.transform = 'none';
                     inner.offsetHeight;
 
-                    wrapper.classList.remove('flipped');
-                    wrapper.classList.remove(`pre-${rarity}`);
-                    wrapper.classList.remove('revealing');
-
+                    wrapper.classList.remove('flipped', 'revealing', `pre-${rarity}`);
                 }, delay);
             });
-        });
 
-        // TOOLTIP POSITIONING
-        wrappers.forEach(wrapper => {
+            // MOUSEMOVE (tilt)
+            container.addEventListener('mousemove', (e) => {
+                const wrapper = e.target.closest('.card-wrapper');
+                if (!wrapper) return;
+                if (!isGameViewActive()) return;
 
-            wrapper.addEventListener('mouseenter', () => {
-                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
+                const inner = wrapper.querySelector('.card-inner');
+                if (!inner) return;
+                if (wrapper.classList.contains('revealing')) return;
+
                 const rect = wrapper.getBoundingClientRect();
+                if (!rect.width || !rect.height) return; // 💥 HARD GUARD
+
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const midX = rect.width / 2;
+                const midY = rect.height / 2;
+
+                const rotateY = ((x - midX) / midX) * -15;
+                const rotateX = -((y - midY) / midY) * -15;
+
+                const flipped = wrapper.classList.contains('flipped');
+
+                inner.style.transform = `
+            rotateX(${rotateX}deg)
+            rotateY(${rotateY + (flipped ? 180 : 0)}deg)
+            scale(1.05)
+        `;
+            });
+
+            // MOUSE LEAVE (reset tilt)
+            container.addEventListener('mouseleave', (e) => {
+                const wrapper = e.target.closest('.card-wrapper');
+                if (!wrapper) return;
+
+                const inner = wrapper.querySelector('.card-inner');
+                if (!inner) return;
+
+                inner.style.transform = '';
+            }, true);
+
+            // TOOLTIP POSITION (ONLY GAME)
+            container.addEventListener('mouseenter', (e) => {
+                const wrapper = e.target.closest('.card-wrapper');
+                if (!wrapper) return;
+                if (!isGameViewActive()) return;
+
+                const rect = wrapper.getBoundingClientRect();
+                if (!rect.width) return; // 💥 GUARD
 
                 const x = rect.right + 30;
                 const y = rect.top + rect.height / 2;
 
                 document.documentElement.style.setProperty('--tooltip-x', x + 'px');
                 document.documentElement.style.setProperty('--tooltip-y', y + 'px');
-            });
-
-        });
-
-        // CARD TILT ANIMATION
-        wrappers.forEach(wrapper => {
-            const inner = wrapper.querySelector('.card-inner');
-
-            wrapper.addEventListener('mouseenter', () => {
-                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
-                if (wrapper.classList.contains('revealing')) return;
-
-                isHovering = true;
-            });
-
-            wrapper.addEventListener('mousemove', (e) => {
-                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
-                if (wrapper.classList.contains('revealing')) return;
-
-                updateTilt(wrapper, inner, e);
-            });
-
-            wrapper.addEventListener('mouseleave', () => {
-                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
-                inner.style.transform = '';
-            });
-        });
-
-        function updateTilt(wrapper, inner, e = null) {
-            const rect = wrapper.getBoundingClientRect();
-
-            let x = rect.width / 2;
-            let y = rect.height / 2;
-
-            if (e) {
-                x = e.clientX - rect.left;
-                y = e.clientY - rect.top;
-            }
-
-            const midX = rect.width / 2;
-            const midY = rect.height / 2;
-
-            const rotateY = ((x - midX) / midX) * -15;
-            const rotateX = -((y - midY) / midY) * -15;
-
-            const flipped = wrapper.classList.contains('flipped');
-
-            inner.style.transform = `
-                rotateX(${rotateX}deg)
-                rotateY(${rotateY + (flipped ? 180 : 0)}deg)
-                scale(1.05)
-            `;
+            }, true);
         }
+
+        // 🚀 INIT ONCE
+        setupGameCardInteractions();
+
+        //     function updateTilt(wrapper, inner, e = null) {
+        //         if (!wrapper || !inner) return;
+
+        //         const rect = wrapper.getBoundingClientRect();
+        //         if (!rect) return;
+
+        //         let x = rect.width / 2;
+        //         let y = rect.height / 2;
+
+        //         if (e) {
+        //             x = e.clientX - rect.left;
+        //             y = e.clientY - rect.top;
+        //         }
+
+        //         const midX = rect.width / 2;
+        //         const midY = rect.height / 2;
+
+        //         const rotateY = ((x - midX) / midX) * -15;
+        //         const rotateX = -((y - midY) / midY) * -15;
+
+        //         const flipped = wrapper.classList.contains('flipped');
+
+        //         inner.style.transform = `
+        //     rotateX(${rotateX}deg)
+        //     rotateY(${rotateY + (flipped ? 180 : 0)}deg)
+        //     scale(1.05)
+        // `;
+        //     }
 
         // CARD SPREAD ANIMATION
         function spreadFromCenter() {
@@ -1692,13 +1845,16 @@
 
                 // STEP 3: measure final positions
                 const positions = cards.map(card => {
+                    if (!card || !card.isConnected) return null;
+
                     const rect = card.getBoundingClientRect();
+
                     return {
                         card,
                         x: rect.left + rect.width / 2,
                         y: rect.top + rect.height / 2
                     };
-                });
+                }).filter(Boolean);
 
                 // STEP 4: move them BACK to center (instantly)
                 positions.forEach(({ card, x, y }) => {
@@ -1767,13 +1923,25 @@
             renderCollectionVirtual(currentFilters);
         });
 
-        let refreshTimeout;
+        let wowheadQueue = new Set();
+        let wowheadScheduled = false;
 
-        function refreshWowhead() {
-            clearTimeout(refreshTimeout);
-            refreshTimeout = setTimeout(() => {
-                window.$WowheadPower?.refreshLinks?.();
-            }, 50);
+        function queueWowheadRefresh(container) {
+            wowheadQueue.add(container);
+
+            if (wowheadScheduled) return;
+            wowheadScheduled = true;
+
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    wowheadQueue.forEach(el => {
+                        window.$WowheadPower?.refreshLinks?.(el);
+                    });
+
+                    wowheadQueue.clear();
+                    wowheadScheduled = false;
+                }, 30); // small delay helps Wowhead catch DOM
+            });
         }
 
         // COLLECTION
@@ -1798,6 +1966,7 @@
             bufferRows: 2
         };
 
+        let domPool = [];
         let virtualState = {
             itemsPerRow: 1,
             totalRows: 0,
@@ -1846,6 +2015,16 @@
             renderCollectionVirtual(currentFilters);
         });
 
+        function resetVirtualGrid(grid) {
+            domPool.forEach(el => el.remove());
+            domPool = [];
+
+            virtualState.lastStart = -1;
+            virtualState.lastEnd = -1;
+
+            grid.innerHTML = '';
+        }
+
         // grid.addEventListener('scroll', () => {
         //     const nearBottom =
         //         grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 200;
@@ -1858,6 +2037,9 @@
         function renderCollectionVirtual({ ownedOnly = false, search = "", quality = null, grid } = {}) {
             initData();
 
+            // 🔥 RESET EVERYTHING (CRITICAL)
+            resetVirtualGrid(grid);
+
             // filter items
             currentItems = ALL_ITEMS.filter(item =>
                 (!ownedOnly || collection[item.id]) &&
@@ -1865,6 +2047,7 @@
                 (!search || item.nameLower.includes(search.toLowerCase()))
             );
 
+            grid.scrollTop = 0;
             grid.innerHTML = '';
 
             // calculate layout
@@ -1913,19 +2096,13 @@
         }
 
         function renderVirtualSlice(grid, start, end) {
-            // remove old cards (keep spacer)
-            const nodes = [...grid.children].slice(1);
-            nodes.forEach(n => n.remove());
-
             const fragment = document.createDocumentFragment();
+            const needed = end - start;
 
-            for (let i = start; i < end; i++) {
-                const item = currentItems[i];
-                const owned = collection[item.id] || 0;
-                const expansion = EXPANSION_MAP[item.exp];
-
+            // ensure pool size
+            while (domPool.length < needed) {
                 const wrapper = document.createElement('div');
-                wrapper.innerHTML = createCard(item.id, expansion);
+                wrapper.innerHTML = createCard(0, "classic"); // dummy init
 
                 const el = wrapper.firstElementChild;
 
@@ -1938,23 +2115,54 @@
                 const hover = el.querySelector('.hover-layer-flipped');
                 if (hover) hover.remove();
 
-                // 🎯 position
-                const row = Math.floor(i / virtualState.itemsPerRow);
-                const col = i % virtualState.itemsPerRow;
+                domPool.push(el);
+                grid.appendChild(el);
+            }
+
+            for (let i = 0; i < domPool.length; i++) {
+                const el = domPool[i];
+
+                if (i >= needed) {
+                    el.style.display = 'none';
+                    continue;
+                }
+
+                const item = currentItems[start + i];
+                const owned = collection[item.id] || 0;
+                const expansion = EXPANSION_MAP[item.exp];
+
+                el.style.display = '';
+
+                // 🔥 UPDATE WOWHEAD LINK (CRITICAL)
+                const link = el.querySelector('a');
+                link.href = `https://${expansion}.wowhead.com/item=${item.id}`;
+                link.setAttribute('data-wh-rename', 'true');
+
+                // reset icon so Wowhead reprocesses
+                link.innerHTML = '';
+
+                // position
+                const row = Math.floor((start + i) / virtualState.itemsPerRow);
+                const col = (start + i) % virtualState.itemsPerRow;
 
                 el.style.position = 'absolute';
                 el.style.top = (row * VIRTUAL.itemHeight) + 'px';
                 el.style.left = (col * VIRTUAL.itemWidth) + 'px';
 
-                // 🎨 owned logic (UNCHANGED)
+                // owned styling
                 if (!owned) {
                     el.style.opacity = 0.25;
                     el.style.filter = 'grayscale(1)';
+                } else {
+                    el.style.opacity = '';
+                    el.style.filter = '';
                 }
 
-                if (owned > 0) {
-                    const badge = document.createElement('div');
-                    badge.textContent = `x${owned}`;
+                // badge (reset)
+                let badge = el.querySelector('.count-badge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'count-badge';
                     badge.style.position = 'absolute';
                     badge.style.bottom = '4px';
                     badge.style.right = '6px';
@@ -1963,12 +2171,13 @@
                     el.appendChild(badge);
                 }
 
-                fragment.appendChild(el);
+                badge.textContent = owned > 0 ? `x${owned}` : '';
             }
 
-            grid.appendChild(fragment);
-
-            refreshWowhead();
+            // 🔥 CRITICAL: FULL refresh (not scoped)
+            requestAnimationFrame(() => {
+                window.$WowheadPower?.refreshLinks?.();
+            });
         }
 
         // function renderNextBatch(grid) {
