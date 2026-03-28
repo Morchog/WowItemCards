@@ -1580,112 +1580,6 @@
         const container = document.querySelector('.container');
 
 
-        // const wrappers = document.querySelectorAll('.card-wrapper');
-
-        // CARD FLIP LOGIC
-        // wrappers.forEach(wrapper => {
-        //     const inner = wrapper.querySelector('.card-inner');
-
-        //     wrapper.addEventListener('click', () => {
-
-        //         // ❌ ignore in collection view
-        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
-
-        //         // 🔥 If already revealed → ignore
-        //         if (!wrapper.classList.contains('flipped')) return;
-
-        //         // 💥 If already revealing → SKIP animation
-        //         if (wrapper.classList.contains('revealing')) {
-
-        //             clearTimeout(wrapper._revealTimeout);
-
-        //             const inner = wrapper.querySelector('.card-inner');
-
-        //             // clean state
-        //             inner.style.transform = 'none';
-        //             inner.offsetHeight;
-
-        //             wrapper.classList.remove('flipped');
-        //             wrapper.classList.remove('pre-epic', 'pre-legendary', 'pre-heirloom');
-        //             wrapper.classList.remove('revealing');
-
-        //             return;
-        //         }
-
-        //         // 🧠 NORMAL FLOW
-        //         wrapper.classList.add('revealing');
-
-        //         const inner = wrapper.querySelector('.card-inner');
-        //         const front = wrapper.querySelector('.front');
-
-        //         let rarity = null;
-        //         if (front.classList.contains('q4')) rarity = 'epic';
-        //         if (front.classList.contains('q5')) rarity = 'legendary';
-        //         if (front.classList.contains('q7')) rarity = 'heirloom';
-
-        //         let delay = 0;
-
-        //         if (rarity) {
-        //             wrapper.classList.add(`pre-${rarity}`);
-
-        //             delay = 600;
-        //             if (rarity === 'legendary') delay = 1200;
-        //             if (rarity === 'heirloom') delay = 900;
-        //         }
-
-        //         // 🔥 store timeout so we can cancel it
-        //         wrapper._revealTimeout = setTimeout(() => {
-
-        //             inner.style.transform = 'none';
-        //             inner.offsetHeight;
-
-        //             wrapper.classList.remove('flipped');
-        //             wrapper.classList.remove(`pre-${rarity}`);
-        //             wrapper.classList.remove('revealing');
-
-        //         }, delay);
-        //     });
-        // });
-
-        // // TOOLTIP POSITIONING
-        // wrappers.forEach(wrapper => {
-
-        //     wrapper.addEventListener('mouseenter', () => {
-        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
-        //         const rect = wrapper.getBoundingClientRect();
-
-        //         const x = rect.right + 30;
-        //         const y = rect.top + rect.height / 2;
-
-        //         document.documentElement.style.setProperty('--tooltip-x', x + 'px');
-        //         document.documentElement.style.setProperty('--tooltip-y', y + 'px');
-        //     });
-
-        // });
-
-        // // CARD TILT ANIMATION
-        // wrappers.forEach(wrapper => {
-        //     const inner = wrapper.querySelector('.card-inner');
-
-        //     wrapper.addEventListener('mouseenter', () => {
-        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
-        //         if (wrapper.classList.contains('revealing')) return;
-
-        //         isHovering = true;
-        //     });
-
-        //     wrapper.addEventListener('mousemove', (e) => {
-        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
-        //         if (wrapper.classList.contains('revealing')) return;
-
-        //         updateTilt(wrapper, inner, e);
-        //     });
-
-        //     wrapper.addEventListener('mouseleave', () => {
-        //         if (!isGameViewActive()) return; // 🛑 STOP in collection mode
-        //         inner.style.transform = '';
-        //     });
-        // });
 
         // ================= GAME VIEW INTERACTIONS (SAFE) =================
 
@@ -1800,35 +1694,6 @@
 
         // 🚀 INIT ONCE
         setupGameCardInteractions();
-
-        //     function updateTilt(wrapper, inner, e = null) {
-        //         if (!wrapper || !inner) return;
-
-        //         const rect = wrapper.getBoundingClientRect();
-        //         if (!rect) return;
-
-        //         let x = rect.width / 2;
-        //         let y = rect.height / 2;
-
-        //         if (e) {
-        //             x = e.clientX - rect.left;
-        //             y = e.clientY - rect.top;
-        //         }
-
-        //         const midX = rect.width / 2;
-        //         const midY = rect.height / 2;
-
-        //         const rotateY = ((x - midX) / midX) * -15;
-        //         const rotateX = -((y - midY) / midY) * -15;
-
-        //         const flipped = wrapper.classList.contains('flipped');
-
-        //         inner.style.transform = `
-        //     rotateX(${rotateX}deg)
-        //     rotateY(${rotateY + (flipped ? 180 : 0)}deg)
-        //     scale(1.05)
-        // `;
-        //     }
 
         // CARD SPREAD ANIMATION
         function spreadFromCenter() {
@@ -1949,10 +1814,7 @@
         // COLLECTION
         const grid = document.getElementById('collectionGrid');
         const controls = document.getElementById('collectionControls');
-        const PAGE_SIZE = 100;
-        let currentIndex = 0;
         let currentItems = [];
-        let isRendering = false;
         let currentFilters = {
             ownedOnly: false,
             search: "",
@@ -2024,15 +1886,6 @@
 
             grid.innerHTML = '';
         }
-
-        // grid.addEventListener('scroll', () => {
-        //     const nearBottom =
-        //         grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 200;
-
-        //     if (nearBottom) {
-        //         renderNextBatch(grid);
-        //     }
-        // });
 
         function renderCollectionVirtual({ ownedOnly = false, search = "", quality = null, grid } = {}) {
             initData();
@@ -2179,71 +2032,6 @@
                 window.$WowheadPower?.refreshLinks?.();
             });
         }
-
-        // function renderNextBatch(grid) {
-        //     if (isRendering) return;
-        //     isRendering = true;
-
-        //     const start = currentIndex;
-        //     const end = currentIndex + PAGE_SIZE;
-
-        //     const slice = currentItems.slice(start, end); // ✅ defined here
-
-        //     if (!slice.length) {
-        //         isRendering = false;
-        //         return;
-        //     }
-
-        //     const fragment = document.createDocumentFragment();
-
-        //     slice.forEach(item => {
-        //         const owned = collection[item.id] || 0;
-        //         const expansion = EXPANSION_MAP[item.exp];
-
-        //         const wrapper = document.createElement('div');
-        //         wrapper.innerHTML = createCard(item.id, expansion);
-
-        //         const el = wrapper.firstElementChild;
-
-        //         el.classList.add('collection');
-        //         el.classList.remove('flipped');
-
-        //         const back = el.querySelector('.back');
-        //         if (back) back.remove();
-
-        //         const hover = el.querySelector('.hover-layer-flipped');
-        //         if (hover) hover.remove();
-
-        //         if (!owned) {
-        //             el.style.opacity = 0.25;
-        //             el.style.filter = 'grayscale(1)';
-        //         }
-
-        //         if (owned > 0) {
-        //             const badge = document.createElement('div');
-        //             badge.textContent = `x${owned}`;
-        //             badge.style.position = 'absolute';
-        //             badge.style.bottom = '4px';
-        //             badge.style.right = '6px';
-        //             badge.style.fontSize = '10px';
-        //             badge.style.color = '#fff';
-        //             el.appendChild(badge);
-        //         }
-
-        //         fragment.appendChild(el);
-        //     });
-
-        //     grid.appendChild(fragment);
-
-        //     currentIndex += PAGE_SIZE;
-
-        //     refreshWowhead();
-
-        //     requestAnimationFrame(() => {
-        //         isRendering = false;
-        //     });
-        // }
-
         // ============= VIEWS END =======================================================================================
         // ============= VIEWS END =======================================================================================
         // ============= VIEWS END =======================================================================================
