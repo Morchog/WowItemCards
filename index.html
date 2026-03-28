@@ -224,7 +224,7 @@
 
             position: relative;
 
-            background-image: url("https://wow.zamimg.com/images/wow/talents/backgrounds/wrath/164.jpg");
+            background-image: url("https://wow.zamimg.com/images/wow/talents/backgrounds/wrath/303.jpg");
             background-size: 145%;
             background-position: center;
             background-repeat: no-repeat;
@@ -242,7 +242,7 @@
             width: 60px;
             height: 60px;
 
-            background-image: url("https://wow.zamimg.com/images/wow/icons/large/wow_token01.jpg");
+            background-image: url("https://wow.zamimg.com/images/wow/icons/large/wow_token02.jpg");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -718,7 +718,7 @@
         }
 
         /* ESSENCE */
-        .currency-icon.essence {
+        .currency-icon.essences {
             background-image: url("https://wow.zamimg.com/images/wow/icons/large/inv_jewelcrafting_icediamond_01.jpg");
         }
 
@@ -891,6 +891,29 @@
                 transform: translateY(-30px) scale(1.05);
             }
         }
+
+        /* 📚 COLLECTION MODE */
+        .collection .card-inner {
+            width: 80px;
+            height: 120px;
+        }
+
+        .collection .card .iconlarge {
+            width: 40px !important;
+            height: 40px !important;
+        }
+
+        .collection .card span:last-child {
+            font-size: 10px;
+        }
+
+        #collectionGrid {
+            position: relative;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+
+            display: block;
+        }
     </style>
 </head>
 
@@ -925,6 +948,11 @@
         </div>
     </div>
 
+    <div id="collectionView" style="display:none; padding-left:240px;">
+        <div id="collectionControls"></div>
+        <div id="collectionGrid" id="collectionGrid"></div>
+    </div>
+
     <div class="currency-panel">
 
         <div class="currency" id="goldCurrency" data-tooltip="Gold – used to purchase various chests">
@@ -932,8 +960,8 @@
             <span class="value" id="goldValue">1250572341</span>
         </div>
 
-        <div class="currency" id="essenceCurrency" data-tooltip="Essences – used to purchase chests with better odds">
-            <div class="currency-icon essence"></div>
+        <div class="currency" id="essencesCurrency" data-tooltip="Essences – used to purchase chests with better odds">
+            <div class="currency-icon essences"></div>
             <span class="value" id="essencesValue">42</span>
         </div>
 
@@ -985,6 +1013,9 @@
     }
     </script>
 
+    <!-- <script id="item-data"
+        type="application/json"> { "c": { "0": { "39": "Recruit's Pants", "44": "Squire's Pants" }, "1": { "25": "Worn Shortsword", "35": "Bent Staff" }, "2": { "727": "Notched Shortsword", "744": "Thunderbrew's Boot Flask" }, "3": { "720": "Brawler Gloves", "754": "Shortsword of Vengeance" }, "4": { "647": "Destiny", "809": "Bloodrazor", "810": "Hammer of the Northern Wind" }, "5": { "17182": "Sulfuras, Hand of Ragnaros" } } } </script> -->
+
     <script>
         const MAX = 1_000_000_000_000_000;
 
@@ -1034,7 +1065,7 @@
 
         function updateCurrencyUI() {
             document.getElementById('goldValue').textContent = formatNumber(currencies.gold);
-            document.getElementById('essencesValue').textContent = formatNumber(currencies.esseneces);
+            document.getElementById('essencesValue').textContent = formatNumber(currencies.essences);
             document.getElementById('crystalsValue').textContent = formatNumber(currencies.crystals);
             document.getElementById('sanctifiedValue').textContent = formatNumber(currencies.sanctified);
         }
@@ -1064,28 +1095,45 @@
         // STORAGE
         const defaultCurrencies = {
             gold: 0,
-            esseneces: 0,
+            essences: 0,
             crystals: 0,
             sanctified: 0,
         };
 
         const rewardTable = {
-            gold: { min: 900_000_000_000_000, max: 1_000_000_000_000_000 },
-            essence: { min: 2, max: 8 },
+            gold: { min: 1_000, max: 10_000 },
+            essences: { min: 2, max: 8 },
             crystals: { min: 1, max: 3 },
             sanctified: { min: 1, max: 3 }
         };
 
         function loadCurrencies() {
-            const saved = localStorage.getItem('currencies');
-            return saved ? JSON.parse(saved) : { ...defaultCurrencies };
+            try {
+                const saved = JSON.parse(localStorage.getItem('currencies'));
+                return { ...defaultCurrencies, ...saved };
+            } catch {
+                return { ...defaultCurrencies };
+            }
         }
 
         function saveCurrencies() {
             localStorage.setItem('currencies', JSON.stringify(currencies));
         }
 
+        function loadCollection() {
+            try {
+                return JSON.parse(localStorage.getItem('collection')) || {};
+            } catch {
+                return {};
+            }
+        }
+
+        function saveCollection() {
+            localStorage.setItem('collection', JSON.stringify(collection));
+        }
+
         let currencies = loadCurrencies();
+        let collection = loadCollection();
 
         // GAME RULES
         // GAME RULES
@@ -1119,41 +1167,13 @@
             return saved ? parseInt(saved) : Date.now() + TIMER_DURATION;
         }
 
+        // TIMER LOGIC
+        // TIMER LOGIC
+        // TIMER LOGIC
         function updateTimer() {
+            processProgress();
+
             const now = Date.now();
-
-            // 🎁 HANDLE ALL MISSED REWARD CYCLES
-            while (now >= endTime) {
-
-                // give rewards
-                for (let key in currentRewards) {
-                    currencies[key] = Math.min(currencies[key] + currentRewards[key], MAX);
-
-                    // 🎯 trigger floating text
-                    const el = document.getElementById(`${key}Currency`);
-                    if (el) {
-                        showFloatingText(
-                            el,
-                            `+${formatNumber(currentRewards[key])}`,
-                            key
-                        );
-                    }
-                }
-
-                // move to next cycle
-                endTime += TIMER_DURATION;
-
-                // roll new rewards
-                currentRewards = rollRewards();
-            }
-
-            // 💾 SAVE STATE
-            saveCurrencies();
-            updateCurrencyUI();
-            localStorage.setItem('wow_timer_end', endTime);
-            saveRewards(currentRewards);
-
-            // ⏳ DISPLAY TIMER
             const remaining = endTime - now;
 
             const hours = Math.floor(remaining / (1000 * 60 * 60));
@@ -1164,11 +1184,60 @@
                 String(hours).padStart(2, '0') + ':' +
                 String(minutes).padStart(2, '0') + ':' +
                 String(seconds).padStart(2, '0');
+
+            updateCurrencyUI();
         }
+
+        function processProgress() {
+            const now = Date.now();
+
+            // 🧮 how many cycles passed
+            const elapsed = now - endTime;
+
+            if (elapsed < 0) return;
+
+            const rawCycles = Math.floor(elapsed / TIMER_DURATION) + 1;
+
+            // 🛑 safety cap
+            const MAX_CYCLES = 100_000;
+            const cycles = Math.min(rawCycles, MAX_CYCLES);
+
+            // 💰 APPLY GAINS
+            for (let key in currentRewards) {
+                const gain = currentRewards[key] * cycles;
+                currencies[key] = Math.min(currencies[key] + gain, MAX);
+            }
+
+            // ✨ FLOATING TEXT ONLY IF USER IS ACTIVE (small cycles)
+            if (cycles === 1) {
+                for (let key in currentRewards) {
+                    const el = document.getElementById(`${key}Currency`);
+                    if (el) {
+                        showFloatingText(
+                            el,
+                            `+${formatNumber(currentRewards[key])}`,
+                            key
+                        );
+                    }
+                }
+            }
+
+            // ⏩ advance time CORRECTLY
+            endTime += rawCycles * TIMER_DURATION;
+
+            // 🎲 roll next rewards
+            currentRewards = rollRewards();
+
+            // 💾 save
+            saveCurrencies();
+            saveRewards(currentRewards);
+            localStorage.setItem('wow_timer_end', endTime);
+        }
+
 
         // update every second
         setInterval(updateTimer, 1000);
-        updateTimer();
+        // updateTimer();
 
 
         // REWARDS
@@ -1417,6 +1486,13 @@
         function openPack(size) {
             const pack = generatePack({ size });
 
+            // ✅ ADD TO COLLECTION
+            pack.forEach(item => {
+                collection[item.id] = (collection[item.id] || 0) + 1;
+            });
+
+            saveCollection();
+
             const { left, center, right } = distributeCards(pack);
 
             leftCol.innerHTML = left.map(i => createCard(i.id, EXPANSION_MAP[i.exp])).join('');
@@ -1475,6 +1551,9 @@
             const inner = wrapper.querySelector('.card-inner');
 
             wrapper.addEventListener('click', () => {
+
+                // ❌ ignore in collection view
+                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
 
                 // 🔥 If already revealed → ignore
                 if (!wrapper.classList.contains('flipped')) return;
@@ -1536,6 +1615,7 @@
         wrappers.forEach(wrapper => {
 
             wrapper.addEventListener('mouseenter', () => {
+                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
                 const rect = wrapper.getBoundingClientRect();
 
                 const x = rect.right + 30;
@@ -1552,18 +1632,21 @@
             const inner = wrapper.querySelector('.card-inner');
 
             wrapper.addEventListener('mouseenter', () => {
+                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
                 if (wrapper.classList.contains('revealing')) return;
 
                 isHovering = true;
             });
 
             wrapper.addEventListener('mousemove', (e) => {
+                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
                 if (wrapper.classList.contains('revealing')) return;
 
                 updateTilt(wrapper, inner, e);
             });
 
             wrapper.addEventListener('mouseleave', () => {
+                if (!isGameViewActive()) return; // 🛑 STOP in collection mode
                 inner.style.transform = '';
             });
         });
@@ -1649,6 +1732,313 @@
             });
         }
 
+        function waitForWowheadRender(container, callback) {
+            const observer = new MutationObserver(() => {
+                const icons = container.querySelectorAll('.iconlarge ins');
+
+                if (icons.length > 0) {
+                    observer.disconnect();
+                    callback();
+                }
+            });
+
+            observer.observe(container, {
+                childList: true,
+                subtree: true
+            });
+        }
+
+        // ============= VIEWS =======================================================================================
+        // ============= VIEWS =======================================================================================
+        // ============= VIEWS =======================================================================================
+        // ============= VIEWS =======================================================================================
+        const collectionBtn = document.querySelector('.menu-item:nth-child(3)');
+        const gameView = document.querySelector('.container');
+        const collectionView = document.getElementById('collectionView');
+
+        function isGameViewActive() {
+            return gameView.style.display !== 'none';
+        }
+
+        collectionBtn.addEventListener('click', () => {
+            gameView.style.display = 'none';
+            collectionView.style.display = 'block';
+
+            renderCollectionVirtual(currentFilters);
+        });
+
+        let refreshTimeout;
+
+        function refreshWowhead() {
+            clearTimeout(refreshTimeout);
+            refreshTimeout = setTimeout(() => {
+                window.$WowheadPower?.refreshLinks?.();
+            }, 50);
+        }
+
+        // COLLECTION
+        // COLLECTION
+        // COLLECTION
+        const grid = document.getElementById('collectionGrid');
+        const controls = document.getElementById('collectionControls');
+        const PAGE_SIZE = 100;
+        let currentIndex = 0;
+        let currentItems = [];
+        let isRendering = false;
+        let currentFilters = {
+            ownedOnly: false,
+            search: "",
+            quality: null,
+            grid: grid
+        };
+
+        const VIRTUAL = {
+            itemWidth: 90,
+            itemHeight: 140, // include gap
+            bufferRows: 2
+        };
+
+        let virtualState = {
+            itemsPerRow: 1,
+            totalRows: 0,
+            lastStart: -1,
+            lastEnd: -1
+        };
+
+        controls.innerHTML = `
+            <input id="searchInput" placeholder="Search items..." />
+            
+            <select id="qualityFilter">
+                <option value="">All Qualities</option>
+                <option value="0">Poor</option>
+                <option value="1">Common</option>
+                <option value="2">Uncommon</option>
+                <option value="3">Rare</option>
+                <option value="4">Epic</option>
+                <option value="5">Legendary</option>
+            </select>
+
+            <button id="showAll">All</button>
+            <button id="showOwned">Owned</button>
+        `;
+
+        document.getElementById('searchInput').oninput = (e) => {
+            currentFilters.search = e.target.value;
+            renderCollectionVirtual(currentFilters);
+        };
+
+        document.getElementById('qualityFilter').onchange = (e) => {
+            currentFilters.quality = e.target.value || null;
+            renderCollectionVirtual(currentFilters);
+        };
+
+        document.getElementById('showAll').onclick = () => {
+            currentFilters.ownedOnly = false;
+            renderCollectionVirtual(currentFilters);
+        };
+
+        document.getElementById('showOwned').onclick = () => {
+            currentFilters.ownedOnly = true;
+            renderCollectionVirtual(currentFilters);
+        };
+
+        window.addEventListener('resize', () => {
+            renderCollectionVirtual(currentFilters);
+        });
+
+        // grid.addEventListener('scroll', () => {
+        //     const nearBottom =
+        //         grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 200;
+
+        //     if (nearBottom) {
+        //         renderNextBatch(grid);
+        //     }
+        // });
+
+        function renderCollectionVirtual({ ownedOnly = false, search = "", quality = null, grid } = {}) {
+            initData();
+
+            // filter items
+            currentItems = ALL_ITEMS.filter(item =>
+                (!ownedOnly || collection[item.id]) &&
+                (!quality || item.quality == quality) &&
+                (!search || item.nameLower.includes(search.toLowerCase()))
+            );
+
+            grid.innerHTML = '';
+
+            // calculate layout
+            const gridWidth = grid.clientWidth;
+            virtualState.itemsPerRow = Math.max(1, Math.floor(gridWidth / VIRTUAL.itemWidth));
+            virtualState.totalRows = Math.ceil(currentItems.length / virtualState.itemsPerRow);
+
+            // fake full height
+            grid.style.height = 'calc(100vh - 80px)';
+            grid.style.position = 'relative';
+
+            const spacer = document.createElement('div');
+            spacer.style.height = (virtualState.totalRows * VIRTUAL.itemHeight) + 'px';
+            grid.appendChild(spacer);
+
+            // initial render
+            updateVisibleItems(grid);
+
+            // scroll handler
+            grid.onscroll = () => updateVisibleItems(grid);
+        }
+
+        function updateVisibleItems(grid) {
+            const scrollTop = grid.scrollTop;
+            const viewHeight = grid.clientHeight;
+
+            const rowHeight = VIRTUAL.itemHeight;
+            const itemsPerRow = virtualState.itemsPerRow;
+
+            const startRow = Math.floor(scrollTop / rowHeight);
+            const visibleRows = Math.ceil(viewHeight / rowHeight);
+
+            const start = Math.max(0, (startRow - VIRTUAL.bufferRows) * itemsPerRow);
+            const end = Math.min(
+                currentItems.length,
+                (startRow + visibleRows + VIRTUAL.bufferRows) * itemsPerRow
+            );
+
+            // 🛑 prevent unnecessary rerenders
+            if (start === virtualState.lastStart && end === virtualState.lastEnd) return;
+
+            virtualState.lastStart = start;
+            virtualState.lastEnd = end;
+
+            renderVirtualSlice(grid, start, end);
+        }
+
+        function renderVirtualSlice(grid, start, end) {
+            // remove old cards (keep spacer)
+            const nodes = [...grid.children].slice(1);
+            nodes.forEach(n => n.remove());
+
+            const fragment = document.createDocumentFragment();
+
+            for (let i = start; i < end; i++) {
+                const item = currentItems[i];
+                const owned = collection[item.id] || 0;
+                const expansion = EXPANSION_MAP[item.exp];
+
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = createCard(item.id, expansion);
+
+                const el = wrapper.firstElementChild;
+
+                el.classList.add('collection');
+                el.classList.remove('flipped');
+
+                const back = el.querySelector('.back');
+                if (back) back.remove();
+
+                const hover = el.querySelector('.hover-layer-flipped');
+                if (hover) hover.remove();
+
+                // 🎯 position
+                const row = Math.floor(i / virtualState.itemsPerRow);
+                const col = i % virtualState.itemsPerRow;
+
+                el.style.position = 'absolute';
+                el.style.top = (row * VIRTUAL.itemHeight) + 'px';
+                el.style.left = (col * VIRTUAL.itemWidth) + 'px';
+
+                // 🎨 owned logic (UNCHANGED)
+                if (!owned) {
+                    el.style.opacity = 0.25;
+                    el.style.filter = 'grayscale(1)';
+                }
+
+                if (owned > 0) {
+                    const badge = document.createElement('div');
+                    badge.textContent = `x${owned}`;
+                    badge.style.position = 'absolute';
+                    badge.style.bottom = '4px';
+                    badge.style.right = '6px';
+                    badge.style.fontSize = '10px';
+                    badge.style.color = '#fff';
+                    el.appendChild(badge);
+                }
+
+                fragment.appendChild(el);
+            }
+
+            grid.appendChild(fragment);
+
+            refreshWowhead();
+        }
+
+        // function renderNextBatch(grid) {
+        //     if (isRendering) return;
+        //     isRendering = true;
+
+        //     const start = currentIndex;
+        //     const end = currentIndex + PAGE_SIZE;
+
+        //     const slice = currentItems.slice(start, end); // ✅ defined here
+
+        //     if (!slice.length) {
+        //         isRendering = false;
+        //         return;
+        //     }
+
+        //     const fragment = document.createDocumentFragment();
+
+        //     slice.forEach(item => {
+        //         const owned = collection[item.id] || 0;
+        //         const expansion = EXPANSION_MAP[item.exp];
+
+        //         const wrapper = document.createElement('div');
+        //         wrapper.innerHTML = createCard(item.id, expansion);
+
+        //         const el = wrapper.firstElementChild;
+
+        //         el.classList.add('collection');
+        //         el.classList.remove('flipped');
+
+        //         const back = el.querySelector('.back');
+        //         if (back) back.remove();
+
+        //         const hover = el.querySelector('.hover-layer-flipped');
+        //         if (hover) hover.remove();
+
+        //         if (!owned) {
+        //             el.style.opacity = 0.25;
+        //             el.style.filter = 'grayscale(1)';
+        //         }
+
+        //         if (owned > 0) {
+        //             const badge = document.createElement('div');
+        //             badge.textContent = `x${owned}`;
+        //             badge.style.position = 'absolute';
+        //             badge.style.bottom = '4px';
+        //             badge.style.right = '6px';
+        //             badge.style.fontSize = '10px';
+        //             badge.style.color = '#fff';
+        //             el.appendChild(badge);
+        //         }
+
+        //         fragment.appendChild(el);
+        //     });
+
+        //     grid.appendChild(fragment);
+
+        //     currentIndex += PAGE_SIZE;
+
+        //     refreshWowhead();
+
+        //     requestAnimationFrame(() => {
+        //         isRendering = false;
+        //     });
+        // }
+
+        // ============= VIEWS END =======================================================================================
+        // ============= VIEWS END =======================================================================================
+        // ============= VIEWS END =======================================================================================
+        // ============= VIEWS END =======================================================================================
 
         // ITEM DATA OPERATIONS
         // ITEM DATA OPERATIONS
@@ -1728,7 +2118,6 @@
             console.log("Grand total items:", grandTotal);
         }
     </script>
-
 
 </body>
 
