@@ -1986,9 +1986,22 @@
 
                 el.style.display = '';
 
-                // 🔥 UPDATE WOWHEAD LINK (CRITICAL)
-                const link = el.querySelector('a');
+                // 🔥 RESET LINK COMPLETELY (CRITICAL FIX)
+                const link = el.querySelector('.front');
+
+                // 1. FULL RESET (this is what you're missing)
+                link.removeAttribute('class');
+                link.className = 'card front'; // reset classes
+                link.removeAttribute('style');
+                link.innerHTML = ''; // remove injected icon
+
+                // remove any wowhead-added classes on parent too
+                el.classList.remove('q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7');
+
+                // 2. SET NEW ITEM
                 link.href = `https://${expansion}.wowhead.com/item=${item.id}`;
+                link.setAttribute('data-wh-icon', 'true');
+                link.setAttribute('data-wh-icon-size', 'large');
                 link.setAttribute('data-wh-rename', 'true');
 
                 // reset icon so Wowhead reprocesses
@@ -2031,6 +2044,27 @@
             requestAnimationFrame(() => {
                 window.$WowheadPower?.refreshLinks?.();
             });
+        }
+
+        function resetCardVisuals(el) {
+            const front = el.querySelector('.front');
+            if (!front) return;
+
+            // 🧹 remove ALL quality classes
+            front.classList.remove('q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7');
+
+            // 🧹 remove rarity pre-effects
+            el.classList.remove('pre-epic', 'pre-legendary', 'pre-heirloom');
+
+            // 🧹 remove inline styles from tilt leftovers
+            const inner = el.querySelector('.card-inner');
+            if (inner) inner.style.transform = '';
+
+            // 🧹 reset wowhead-generated content
+            front.innerHTML = '';
+
+            // 🧹 remove icon classes (WOWHEAD injects these)
+            front.classList.remove('iconlarge', 'iconsmall', 'iconmedium');
         }
         // ============= VIEWS END =======================================================================================
         // ============= VIEWS END =======================================================================================
