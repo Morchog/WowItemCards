@@ -375,13 +375,20 @@
         }
 
         .wowhead-tooltip {
+            pointer-events: none !important;
+        }
+
+        body.game-active .wowhead-tooltip {
             position: fixed !important;
             left: var(--tooltip-x) !important;
             top: var(--tooltip-y) !important;
             transform: translateY(-50%) !important;
-            pointer-events: none !important;
             transition: none !important;
             will-change: transform;
+        }
+
+        body.collection-active .wowhead-tooltip {
+            z-index: 9999 !important;
         }
 
         .wowhead-tooltip .icon,
@@ -722,6 +729,11 @@
             background-image: url("https://wow.zamimg.com/images/wow/icons/large/inv_jewelcrafting_icediamond_01.jpg");
         }
 
+        /* MAGIC DUST */
+        .currency-icon.magic-dust {
+            background-image: url("https://wow.zamimg.com/images/wow/icons/large/inv_misc_powder_feliron.jpg");
+        }
+
         /* 💎 CRYSTALS */
         .currency-icon.crystals {
             background-image: url("https://wow.zamimg.com/images/wow/icons/large/inv_enchant_abysscrystal.jpg");
@@ -907,12 +919,212 @@
             font-size: 10px;
         }
 
-        #collectionGrid {
-            position: relative;
-            height: calc(100vh - 80px);
-            overflow-y: auto;
+        #collectionControls {
+            position: fixed;
+            top: 70px;
+            left: 240px;
+            right: 0;
+            z-index: 60;
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(7, 16, 25, 0.96);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.04), 0 18px 40px rgba(0, 0, 0, 0.20);
+            backdrop-filter: blur(16px);
+        }
 
+        #collectionControls .controls-search {
+            flex: 1 1 420px;
+            min-width: 220px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        #collectionControls .controls-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        #collectionControls input,
+        #collectionControls select,
+        #collectionControls button {
+            border: none;
+            outline: none;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #collectionControls .filter-label {
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        #collectionControls input {
+            flex: 1;
+            min-width: 220px;
+            max-width: 320px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: background 0.2s ease, transform 0.2s ease;
+            font-size: 13px;
+            line-height: 1.2;
+        }
+
+        #collectionControls input:focus {
+            background: rgba(255, 255, 255, 0.14);
+            transform: translateY(-1px);
+        }
+
+        #collectionControls input::placeholder {
+            color: #94a3b8;
+        }
+
+        #collectionControls select {
+            min-width: 160px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.95);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, #cbd5f5 50%), linear-gradient(135deg, #cbd5f5 50%, transparent 50%);
+            background-position: right 14px center, right 14px center;
+            background-size: 8px 8px;
+            background-repeat: no-repeat;
+        }
+
+        #collectionControls button {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            font-weight: 600;
+        }
+
+        #collectionControls button#selectAllOwned {
+            background: rgba(14, 165, 233, 0.12);
+            color: #e2e8f0;
+        }
+
+        #collectionControls button:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+        }
+
+        #collectionControls button.active {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.24);
+        }
+
+        #collectionView {
+            display: none;
+            padding-left: 240px;
+            width: 100%;
+            min-height: 100vh;
+            padding-top: 120px;
+            background: radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 32%), linear-gradient(180deg, #071019 0%, #0b1220 42%, #0f172a 100%);
+            box-sizing: border-box;
+        }
+
+        #collectionGrid {
             display: block;
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 90px);
+            overflow-y: auto;
+            padding: 12px 20px 24px;
+            margin-top: 0;
+            box-sizing: border-box;
+            scrollbar-width: auto;
+            scrollbar-color: auto;
+        }
+
+        #collectionGridInner {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            justify-items: center;
+            gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            grid-auto-rows: 128px;
+            padding: 0;
+        }
+
+        .collection {
+            position: relative;
+        }
+
+        .fallback-icon {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            transform: translateX(-50%);
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(148, 163, 184, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .fallback-name {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            line-height: 1.2;
+            text-align: center;
+            width: calc(100% - 12px);
+            color: rgba(255, 255, 255, 0.92);
+            pointer-events: none;
+            text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+        }
+
+        .selection-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(148, 163, 184, 0.9);
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+            z-index: 20;
+        }
+
+        .selection-checkbox:hover {
+            transform: scale(1.05);
+        }
+
+        .selection-checkbox.selected {
+            background: #0ea5e9;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.16);
+        }
+
+        .collection.selected {
+            outline: 2px solid rgba(14, 165, 233, 0.55);
+            outline-offset: -2px;
         }
     </style>
 </head>
@@ -948,9 +1160,9 @@
         </div>
     </div>
 
-    <div id="collectionView" style="display:none; padding-left:240px;">
+    <div id="collectionView">
         <div id="collectionControls"></div>
-        <div id="collectionGrid" id="collectionGrid"></div>
+        <div id="collectionGrid"></div>
     </div>
 
     <div class="currency-panel">
@@ -958,6 +1170,11 @@
         <div class="currency" id="goldCurrency" data-tooltip="Gold – used to purchase various chests">
             <div class="currency-icon gold"></div>
             <span class="value" id="goldValue">1250572341</span>
+        </div>
+
+        <div class="currency" id="magicDustCurrency" data-tooltip="Magic Dust – used to synthesize UNIQUE common items">
+            <div class="currency-icon magic-dust"></div>
+            <span class="value" id="magicDustValue">0</span>
         </div>
 
         <div class="currency" id="essencesCurrency" data-tooltip="Essences – used to purchase chests with better odds">
@@ -1346,7 +1563,7 @@
         const leftCol = document.querySelector('.left');
         const centerCol = document.querySelector('.center');
         const rightCol = document.querySelector('.right');
-        function createCard(id, expansion) {
+        function createCard(id, expansion, name = '') {
             return `
                 <div class="card-wrapper flipped">
                     <div class="hover-layer-flipped">
@@ -1360,6 +1577,8 @@
                             <!-- FRONT -->
                             <a class="card front" href="https://${expansion}.wowhead.com/item=${id}" data-wh-icon="true"
                                 data-wh-icon-size="large" data-wh-rename="true" draggable="false">
+                                <div class="fallback-icon"></div>
+                                ${name ? `<span class="fallback-name">${name}</span>` : ''}
                             </a>
 
                             <!-- BACK -->
@@ -1777,11 +1996,17 @@
         const gameView = document.querySelector('.container');
         const collectionView = document.getElementById('collectionView');
 
+        document.body.classList.add('game-active');
+
         function isGameViewActive() {
             return gameView.style.display !== 'none';
         }
 
         collectionBtn.addEventListener('click', () => {
+            document.body.classList.add('collection-active');
+            document.body.classList.remove('game-active');
+            document.documentElement.style.removeProperty('--tooltip-x');
+            document.documentElement.style.removeProperty('--tooltip-y');
             gameView.style.display = 'none';
             collectionView.style.display = 'block';
 
@@ -1805,7 +2030,7 @@
 
                     wowheadQueue.clear();
                     wowheadScheduled = false;
-                }, 30); // small delay helps Wowhead catch DOM
+                }, 0);
             });
         }
 
@@ -1822,10 +2047,12 @@
             grid: grid
         };
 
+        const selectedCollectionItems = new Set();
+
         const VIRTUAL = {
-            itemWidth: 90,
-            itemHeight: 140, // include gap
-            bufferRows: 2
+            itemWidth: 120,
+            itemHeight: 128, // actual row height + gap
+            bufferRows: 8
         };
 
         let domPool = [];
@@ -1833,25 +2060,36 @@
             itemsPerRow: 1,
             totalRows: 0,
             lastStart: -1,
-            lastEnd: -1
+            lastEnd: -1,
+            renderedItems: new Map()
         };
 
         controls.innerHTML = `
-            <input id="searchInput" placeholder="Search items..." />
-            
-            <select id="qualityFilter">
-                <option value="">All Qualities</option>
-                <option value="0">Poor</option>
-                <option value="1">Common</option>
-                <option value="2">Uncommon</option>
-                <option value="3">Rare</option>
-                <option value="4">Epic</option>
-                <option value="5">Legendary</option>
-            </select>
+            <div class="controls-search">
+                <input id="searchInput" placeholder="Search items..." />
+                <span class="filter-label">Rarity</span>
+                <select id="qualityFilter" aria-label="Rarity filter" title="Rarity filter">
+                    <option value="">All Rarities</option>
+                    <option value="0">Poor</option>
+                    <option value="1">Common</option>
+                    <option value="2">Uncommon</option>
+                    <option value="3">Rare</option>
+                    <option value="4">Epic</option>
+                    <option value="5">Legendary</option>
+                </select>
+            </div>
 
-            <button id="showAll">All</button>
-            <button id="showOwned">Owned</button>
+            <div class="controls-actions">
+                <button id="selectAllOwned">Select All</button>
+                <button id="showAll" class="active">All</button>
+                <button id="showOwned">Owned</button>
+            </div>
         `;
+
+        const updateFilterButtons = () => {
+            document.getElementById('showAll').classList.toggle('active', !currentFilters.ownedOnly);
+            document.getElementById('showOwned').classList.toggle('active', currentFilters.ownedOnly);
+        };
 
         document.getElementById('searchInput').oninput = (e) => {
             currentFilters.search = e.target.value;
@@ -1865,186 +2103,226 @@
 
         document.getElementById('showAll').onclick = () => {
             currentFilters.ownedOnly = false;
+            updateFilterButtons();
             renderCollectionVirtual(currentFilters);
         };
 
         document.getElementById('showOwned').onclick = () => {
             currentFilters.ownedOnly = true;
+            updateFilterButtons();
             renderCollectionVirtual(currentFilters);
         };
+
+        updateFilterButtons();
 
         window.addEventListener('resize', () => {
             renderCollectionVirtual(currentFilters);
         });
 
-        function resetVirtualGrid(grid) {
-            domPool.forEach(el => el.remove());
-            domPool = [];
+        const LAZY = {
+            batchSize: 96,
+            threshold: 160
+        };
 
-            virtualState.lastStart = -1;
-            virtualState.lastEnd = -1;
+        let lazyState = {
+            loadedItems: 0,
+            loading: false
+        };
 
-            grid.innerHTML = '';
+        function createCollectionItemElement(item) {
+            const expansion = EXPANSION_MAP[item.exp];
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = createCard(item.id, expansion, item.name);
+
+            const el = wrapper.firstElementChild;
+            el.classList.add('collection');
+            el.classList.remove('flipped');
+            el.dataset.itemId = item.id;
+
+            const back = el.querySelector('.back');
+            if (back) back.remove();
+
+            const hover = el.querySelector('.hover-layer-flipped');
+            if (hover) hover.remove();
+
+            const frontLink = el.querySelector('.front');
+            if (frontLink) {
+                frontLink.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+            }
+
+            const tooltipAnchor = el.querySelector('.tooltip-anchor');
+            if (tooltipAnchor) {
+                tooltipAnchor.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+            }
+
+            const owned = collection[item.id] || 0;
+            if (!owned) {
+                el.style.opacity = 0.25;
+                el.style.filter = 'grayscale(1)';
+            } else {
+                const checkbox = document.createElement('div');
+                checkbox.className = 'selection-checkbox';
+                checkbox.classList.toggle('selected', selectedCollectionItems.has(String(item.id)));
+                checkbox.title = 'Select owned item';
+                checkbox.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    toggleCollectionItemSelection(String(item.id), el, checkbox);
+                });
+                el.appendChild(checkbox);
+
+                el.addEventListener('click', (event) => {
+                    if (event.target === checkbox) return;
+                    toggleCollectionItemSelection(String(item.id), el, checkbox);
+                });
+            }
+
+            let badge = el.querySelector('.count-badge');
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'count-badge';
+                badge.style.position = 'absolute';
+                badge.style.bottom = '4px';
+                badge.style.right = '6px';
+                badge.style.fontSize = '10px';
+                badge.style.color = '#fff';
+                el.appendChild(badge);
+            }
+
+            badge.textContent = owned > 0 ? `x${owned}` : '';
+            return el;
         }
+
+        function resetVirtualGrid(grid) {
+            grid.innerHTML = '';
+            lazyState.loadedItems = 0;
+            lazyState.loading = false;
+            domPool = [];
+            virtualState.renderedItems = new Map();
+
+            const inner = document.createElement('div');
+            inner.id = 'collectionGridInner';
+            grid.appendChild(inner);
+            return inner;
+        }
+
+        let collectionScrollPending = false;
 
         function renderCollectionVirtual({ ownedOnly = false, search = "", quality = null, grid } = {}) {
             initData();
 
-            // 🔥 RESET EVERYTHING (CRITICAL)
-            resetVirtualGrid(grid);
+            const gridInner = resetVirtualGrid(grid);
 
-            // filter items
             currentItems = ALL_ITEMS.filter(item =>
                 (!ownedOnly || collection[item.id]) &&
                 (!quality || item.quality == quality) &&
                 (!search || item.nameLower.includes(search.toLowerCase()))
             );
 
-            grid.scrollTop = 0;
-            grid.innerHTML = '';
-
-            // calculate layout
-            const gridWidth = grid.clientWidth;
-            virtualState.itemsPerRow = Math.max(1, Math.floor(gridWidth / VIRTUAL.itemWidth));
+            virtualState.itemsPerRow = Math.max(1, Math.floor((grid.clientWidth + 8) / (VIRTUAL.itemWidth + 8)));
             virtualState.totalRows = Math.ceil(currentItems.length / virtualState.itemsPerRow);
+            virtualState.lastStart = -1;
+            virtualState.lastEnd = -1;
+            virtualState.gridInner = gridInner;
 
-            // fake full height
-            grid.style.height = 'calc(100vh - 80px)';
-            grid.style.position = 'relative';
+            grid.scrollTop = 0;
+            updateVisibleCollectionItems(grid);
 
-            const spacer = document.createElement('div');
-            spacer.style.height = (virtualState.totalRows * VIRTUAL.itemHeight) + 'px';
-            grid.appendChild(spacer);
-
-            // initial render
-            updateVisibleItems(grid);
-
-            // scroll handler
-            grid.onscroll = () => updateVisibleItems(grid);
+            collectionScrollPending = false;
+            grid.onscroll = () => {
+                if (collectionScrollPending) return;
+                collectionScrollPending = true;
+                requestAnimationFrame(() => {
+                    collectionScrollPending = false;
+                    updateVisibleCollectionItems(grid);
+                });
+            };
         }
 
-        function updateVisibleItems(grid) {
+        function updateVisibleCollectionItems(grid) {
+            const gridInner = virtualState.gridInner;
+            if (!gridInner) return;
+
+            const totalItems = currentItems.length;
+            if (!totalItems) {
+                gridInner.innerHTML = '';
+                gridInner.style.paddingTop = '0px';
+                gridInner.style.paddingBottom = '0px';
+                return;
+            }
+
             const scrollTop = grid.scrollTop;
-            const viewHeight = grid.clientHeight;
+            const containerHeight = grid.clientHeight;
 
-            const rowHeight = VIRTUAL.itemHeight;
-            const itemsPerRow = virtualState.itemsPerRow;
+            const startRow = Math.max(0, Math.floor(scrollTop / VIRTUAL.itemHeight) - VIRTUAL.bufferRows);
+            const endRow = Math.min(virtualState.totalRows, Math.ceil((scrollTop + containerHeight) / VIRTUAL.itemHeight) + VIRTUAL.bufferRows);
 
-            const startRow = Math.floor(scrollTop / rowHeight);
-            const visibleRows = Math.ceil(viewHeight / rowHeight);
+            const startIndex = startRow * virtualState.itemsPerRow;
+            const endIndex = Math.min(totalItems, endRow * virtualState.itemsPerRow);
 
-            const start = Math.max(0, (startRow - VIRTUAL.bufferRows) * itemsPerRow);
-            const end = Math.min(
-                currentItems.length,
-                (startRow + visibleRows + VIRTUAL.bufferRows) * itemsPerRow
-            );
+            if (startIndex === virtualState.lastStart && endIndex === virtualState.lastEnd) return;
+            virtualState.lastStart = startIndex;
+            virtualState.lastEnd = endIndex;
 
-            // 🛑 prevent unnecessary rerenders
-            if (start === virtualState.lastStart && end === virtualState.lastEnd) return;
+            const topRows = startRow;
+            const bottomRows = Math.max(0, virtualState.totalRows - endRow);
 
-            virtualState.lastStart = start;
-            virtualState.lastEnd = end;
-
-            renderVirtualSlice(grid, start, end);
-        }
-
-        function renderVirtualSlice(grid, start, end) {
             const fragment = document.createDocumentFragment();
-            const needed = end - start;
+            const newRenderedItems = new Map();
 
-            // ensure pool size
-            while (domPool.length < needed) {
-                const wrapper = document.createElement('div');
-                wrapper.innerHTML = createCard(0, "classic"); // dummy init
-
-                const el = wrapper.firstElementChild;
-
-                el.classList.add('collection');
-                el.classList.remove('flipped');
-
-                const back = el.querySelector('.back');
-                if (back) back.remove();
-
-                const hover = el.querySelector('.hover-layer-flipped');
-                if (hover) hover.remove();
-
-                domPool.push(el);
-                grid.appendChild(el);
+            for (let i = startIndex; i < endIndex; i += 1) {
+                let itemElement = virtualState.renderedItems.get(i);
+                if (!itemElement) {
+                    itemElement = createCollectionItemElement(currentItems[i]);
+                }
+                fragment.appendChild(itemElement);
+                newRenderedItems.set(i, itemElement);
             }
 
-            for (let i = 0; i < domPool.length; i++) {
-                const el = domPool[i];
+            virtualState.renderedItems = newRenderedItems;
+            gridInner.innerHTML = '';
+            gridInner.style.paddingTop = `${topRows * VIRTUAL.itemHeight}px`;
+            gridInner.style.paddingBottom = `${bottomRows * VIRTUAL.itemHeight}px`;
+            gridInner.appendChild(fragment);
 
-                if (i >= needed) {
-                    el.style.display = 'none';
-                    continue;
-                }
-
-                const item = currentItems[start + i];
-                const owned = collection[item.id] || 0;
-                const expansion = EXPANSION_MAP[item.exp];
-
-                el.style.display = '';
-
-                // 🔥 RESET LINK COMPLETELY (CRITICAL FIX)
-                const link = el.querySelector('.front');
-
-                // 1. FULL RESET (this is what you're missing)
-                link.removeAttribute('class');
-                link.className = 'card front'; // reset classes
-                link.removeAttribute('style');
-                link.innerHTML = ''; // remove injected icon
-
-                // remove any wowhead-added classes on parent too
-                el.classList.remove('q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7');
-
-                // 2. SET NEW ITEM
-                link.href = `https://${expansion}.wowhead.com/item=${item.id}`;
-                link.setAttribute('data-wh-icon', 'true');
-                link.setAttribute('data-wh-icon-size', 'large');
-                link.setAttribute('data-wh-rename', 'true');
-
-                // reset icon so Wowhead reprocesses
-                link.innerHTML = '';
-
-                // position
-                const row = Math.floor((start + i) / virtualState.itemsPerRow);
-                const col = (start + i) % virtualState.itemsPerRow;
-
-                el.style.position = 'absolute';
-                el.style.top = (row * VIRTUAL.itemHeight) + 'px';
-                el.style.left = (col * VIRTUAL.itemWidth) + 'px';
-
-                // owned styling
-                if (!owned) {
-                    el.style.opacity = 0.25;
-                    el.style.filter = 'grayscale(1)';
-                } else {
-                    el.style.opacity = '';
-                    el.style.filter = '';
-                }
-
-                // badge (reset)
-                let badge = el.querySelector('.count-badge');
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'count-badge';
-                    badge.style.position = 'absolute';
-                    badge.style.bottom = '4px';
-                    badge.style.right = '6px';
-                    badge.style.fontSize = '10px';
-                    badge.style.color = '#fff';
-                    el.appendChild(badge);
-                }
-
-                badge.textContent = owned > 0 ? `x${owned}` : '';
-            }
-
-            // 🔥 CRITICAL: FULL refresh (not scoped)
-            requestAnimationFrame(() => {
-                window.$WowheadPower?.refreshLinks?.();
-            });
+            queueWowheadRefresh(gridInner);
         }
+
+        function toggleCollectionItemSelection(itemId, cardElement, checkbox) {
+            const itemKey = String(itemId);
+            if (!selectedCollectionItems.has(itemKey)) {
+                selectedCollectionItems.add(itemKey);
+                cardElement.classList.add('selected');
+                if (checkbox) checkbox.classList.add('selected');
+            } else {
+                selectedCollectionItems.delete(itemKey);
+                cardElement.classList.remove('selected');
+                if (checkbox) checkbox.classList.remove('selected');
+            }
+        }
+
+        document.getElementById('selectAllOwned').onclick = () => {
+            currentItems.forEach(item => {
+                if (collection[item.id]) {
+                    selectedCollectionItems.add(String(item.id));
+                }
+            });
+
+            document.querySelectorAll('.collection').forEach(el => {
+                const itemId = String(el.dataset.itemId);
+                if (selectedCollectionItems.has(itemId)) {
+                    el.classList.add('selected');
+                    const checkbox = el.querySelector('.selection-checkbox');
+                    if (checkbox) checkbox.classList.add('selected');
+                }
+            });
+        };
 
         function resetCardVisuals(el) {
             const front = el.querySelector('.front');
