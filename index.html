@@ -734,6 +734,16 @@
             background-image: url("https://wow.zamimg.com/images/wow/icons/large/inv_misc_powder_feliron.jpg");
         }
 
+        .button-icon.magic-dust-button {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            background-image: url("https://wow.zamimg.com/images/wow/icons/large/inv_misc_powder_feliron.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
         /* 💎 CRYSTALS */
         .currency-icon.crystals {
             background-image: url("https://wow.zamimg.com/images/wow/icons/large/inv_enchant_abysscrystal.jpg");
@@ -951,6 +961,36 @@
             gap: 10px;
         }
 
+        #collectionControls .disenchant-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(14, 165, 233, 0.12);
+            color: #e2e8f0;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        #collectionControls .disenchant-button:hover {
+            background: rgba(14, 165, 233, 0.18);
+            transform: translateY(-1px);
+        }
+
+        #collectionControls .disenchant-button.hidden {
+            display: none;
+        }
+
+        #collectionControls .disenchant-value {
+            color: #cbd5f5;
+            font-size: 12px;
+            white-space: nowrap;
+            margin-left: 4px;
+        }
+
         #collectionControls input,
         #collectionControls select,
         #collectionControls button {
@@ -1099,15 +1139,16 @@
 
         .selection-checkbox {
             position: absolute;
-            top: 8px;
-            left: 8px;
-            width: 12px;
-            height: 12px;
-            border: 2px solid rgba(148, 163, 184, 0.9);
+            top: 10px;
+            left: 10px;
+            width: 10px;
+            height: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.9);
             border-radius: 50%;
             background: rgba(15, 23, 42, 0.8);
             box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-            cursor: pointer;
+            cursor: default;
+            pointer-events: none;
             transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
             z-index: 20;
         }
@@ -1119,12 +1160,11 @@
         .selection-checkbox.selected {
             background: #0ea5e9;
             border-color: #0ea5e9;
-            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.16);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.16);
         }
 
         .collection.selected {
-            outline: 2px solid rgba(14, 165, 233, 0.55);
-            outline-offset: -2px;
+            outline: none;
         }
     </style>
 </head>
@@ -1313,6 +1353,7 @@
 
         function updateCurrencyUI() {
             document.getElementById('goldValue').textContent = formatNumber(currencies.gold);
+            document.getElementById('magicDustValue').textContent = formatNumber(currencies.magicDust);
             document.getElementById('essencesValue').textContent = formatNumber(currencies.essences);
             document.getElementById('crystalsValue').textContent = formatNumber(currencies.crystals);
             document.getElementById('sanctifiedValue').textContent = formatNumber(currencies.sanctified);
@@ -1345,6 +1386,7 @@
         // STORAGE
         const defaultCurrencies = {
             gold: 0,
+            magicDust: 0,
             essences: 0,
             crystals: 0,
             sanctified: 0,
@@ -2042,6 +2084,7 @@
         let currentItems = [];
         let currentFilters = {
             ownedOnly: false,
+            duplicatesOnly: false,
             search: "",
             quality: null,
             grid: grid
@@ -2067,7 +2110,6 @@
         controls.innerHTML = `
             <div class="controls-search">
                 <input id="searchInput" placeholder="Search items..." />
-                <span class="filter-label">Rarity</span>
                 <select id="qualityFilter" aria-label="Rarity filter" title="Rarity filter">
                     <option value="">All Rarities</option>
                     <option value="0">Poor</option>
@@ -2077,18 +2119,24 @@
                     <option value="4">Epic</option>
                     <option value="5">Legendary</option>
                 </select>
+                <button id="disenchantSelected" class="disenchant-button hidden" type="button">
+                    <span class="button-icon magic-dust-button"></span>
+                    Disenchant
+                </button>
             </div>
 
             <div class="controls-actions">
                 <button id="selectAllOwned">Select All</button>
                 <button id="showAll" class="active">All</button>
                 <button id="showOwned">Owned</button>
+                <button id="showDuplicates">Duplicate</button>
             </div>
         `;
 
         const updateFilterButtons = () => {
-            document.getElementById('showAll').classList.toggle('active', !currentFilters.ownedOnly);
+            document.getElementById('showAll').classList.toggle('active', !currentFilters.ownedOnly && !currentFilters.duplicatesOnly);
             document.getElementById('showOwned').classList.toggle('active', currentFilters.ownedOnly);
+            document.getElementById('showDuplicates').classList.toggle('active', currentFilters.duplicatesOnly);
         };
 
         document.getElementById('searchInput').oninput = (e) => {
@@ -2103,14 +2151,56 @@
 
         document.getElementById('showAll').onclick = () => {
             currentFilters.ownedOnly = false;
+            currentFilters.duplicatesOnly = false;
             updateFilterButtons();
             renderCollectionVirtual(currentFilters);
         };
 
         document.getElementById('showOwned').onclick = () => {
             currentFilters.ownedOnly = true;
+            currentFilters.duplicatesOnly = false;
             updateFilterButtons();
             renderCollectionVirtual(currentFilters);
+        };
+
+        document.getElementById('showDuplicates').onclick = () => {
+            currentFilters.ownedOnly = false;
+            currentFilters.duplicatesOnly = true;
+            updateFilterButtons();
+            renderCollectionVirtual(currentFilters);
+        };
+
+        document.getElementById('disenchantSelected').onclick = () => {
+            const dust = Array.from(selectedCollectionItems).reduce((sum, itemId) => {
+                const owned = collection[itemId] || 0;
+                return sum + Math.max(0, owned - 1);
+            }, 0);
+
+            if (dust <= 0) return;
+
+            const confirmed = window.confirm(
+                `Disenchanting selected duplicates will yield ${dust} Magic Dust.\n` +
+                `This will destroy extra copies and keep your first copy.`
+            );
+
+            if (!confirmed) return;
+
+            selectedCollectionItems.forEach(itemId => {
+                const owned = collection[itemId] || 0;
+                if (owned > 1) {
+                    collection[itemId] = 1;
+                }
+            });
+
+            currencies.magicDust = Math.min((currencies.magicDust || 0) + dust, MAX);
+            saveCollection();
+            saveCurrencies();
+            updateCurrencyUI();
+            selectedCollectionItems.clear();
+            renderCollectionVirtual(currentFilters);
+
+            const magicDustEl = document.getElementById('magicDustCurrency');
+            showFloatingText(magicDustEl, `+${dust}`, 'magic-dust');
         };
 
         updateFilterButtons();
@@ -2149,7 +2239,6 @@
             if (frontLink) {
                 frontLink.addEventListener('click', (event) => {
                     event.preventDefault();
-                    event.stopPropagation();
                 });
             }
 
@@ -2157,7 +2246,6 @@
             if (tooltipAnchor) {
                 tooltipAnchor.addEventListener('click', (event) => {
                     event.preventDefault();
-                    event.stopPropagation();
                 });
             }
 
@@ -2166,21 +2254,19 @@
                 el.style.opacity = 0.25;
                 el.style.filter = 'grayscale(1)';
             } else {
-                const checkbox = document.createElement('div');
-                checkbox.className = 'selection-checkbox';
-                checkbox.classList.toggle('selected', selectedCollectionItems.has(String(item.id)));
-                checkbox.title = 'Select owned item';
-                checkbox.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    toggleCollectionItemSelection(String(item.id), el, checkbox);
-                });
-                el.appendChild(checkbox);
+                if (owned > 1) {
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'selection-checkbox';
+                    checkbox.classList.toggle('selected', selectedCollectionItems.has(String(item.id)));
+                    checkbox.title = 'Select owned item';
+                    checkbox.style.pointerEvents = 'none';
+                    el.appendChild(checkbox);
 
-                el.addEventListener('click', (event) => {
-                    if (event.target === checkbox) return;
-                    toggleCollectionItemSelection(String(item.id), el, checkbox);
-                });
+                    el.style.cursor = 'pointer';
+                    el.addEventListener('click', () => {
+                        toggleCollectionItemSelection(String(item.id), el, checkbox);
+                    });
+                }
             }
 
             let badge = el.querySelector('.count-badge');
@@ -2188,14 +2274,15 @@
                 badge = document.createElement('div');
                 badge.className = 'count-badge';
                 badge.style.position = 'absolute';
-                badge.style.bottom = '4px';
+                badge.style.top = '8px';
                 badge.style.right = '6px';
                 badge.style.fontSize = '10px';
                 badge.style.color = '#fff';
                 el.appendChild(badge);
             }
 
-            badge.textContent = owned > 0 ? `x${owned}` : '';
+            badge.textContent = owned > 1 ? `x${owned}` : '';
+            badge.style.display = owned > 1 ? 'block' : 'none';
             return el;
         }
 
@@ -2214,16 +2301,22 @@
 
         let collectionScrollPending = false;
 
-        function renderCollectionVirtual({ ownedOnly = false, search = "", quality = null, grid } = {}) {
+        function renderCollectionVirtual({ ownedOnly = false, duplicatesOnly = false, search = "", quality = null, grid } = {}) {
             initData();
 
             const gridInner = resetVirtualGrid(grid);
 
-            currentItems = ALL_ITEMS.filter(item =>
-                (!ownedOnly || collection[item.id]) &&
-                (!quality || item.quality == quality) &&
-                (!search || item.nameLower.includes(search.toLowerCase()))
-            );
+            currentItems = ALL_ITEMS.filter(item => {
+                const owned = collection[item.id] || 0;
+                if (duplicatesOnly) {
+                    if (owned <= 1) return false;
+                } else if (ownedOnly) {
+                    if (owned <= 0) return false;
+                }
+
+                return (!quality || item.quality == quality) &&
+                    (!search || item.nameLower.includes(search.toLowerCase()));
+            });
 
             virtualState.itemsPerRow = Math.max(1, Math.floor((grid.clientWidth + 8) / (VIRTUAL.itemWidth + 8)));
             virtualState.totalRows = Math.ceil(currentItems.length / virtualState.itemsPerRow);
@@ -2233,6 +2326,7 @@
 
             grid.scrollTop = 0;
             updateVisibleCollectionItems(grid);
+            updateDisenchantUI();
 
             collectionScrollPending = false;
             grid.onscroll = () => {
@@ -2305,11 +2399,26 @@
                 cardElement.classList.remove('selected');
                 if (checkbox) checkbox.classList.remove('selected');
             }
+            updateDisenchantUI();
+        }
+
+        function updateDisenchantUI() {
+            const button = document.getElementById('disenchantSelected');
+            const dust = Array.from(selectedCollectionItems).reduce((sum, itemId) => {
+                const owned = collection[itemId] || 0;
+                return sum + Math.max(0, owned - 1);
+            }, 0);
+
+            if (selectedCollectionItems.size > 0 && dust > 0) {
+                button.classList.remove('hidden');
+            } else {
+                button.classList.add('hidden');
+            }
         }
 
         document.getElementById('selectAllOwned').onclick = () => {
             currentItems.forEach(item => {
-                if (collection[item.id]) {
+                if ((collection[item.id] || 0) > 1) {
                     selectedCollectionItems.add(String(item.id));
                 }
             });
@@ -2322,6 +2431,7 @@
                     if (checkbox) checkbox.classList.add('selected');
                 }
             });
+            updateDisenchantUI();
         };
 
         function resetCardVisuals(el) {
